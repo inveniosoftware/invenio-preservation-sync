@@ -25,3 +25,4 @@ recursive-include docs *.txt
 recursive-include docs Makefile
 recursive-include invenio_preservation_sync *.html
 recursive-include invenio_preservation_sync *.js
+recursive-include invenio_preservation_sync *.py

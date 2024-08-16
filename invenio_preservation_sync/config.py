@@ -19,30 +19,9 @@ PRESERVATION_SYNC_GET_LATEST_PATH = "/records/<id>/preservations/latest"
 
 
 def resolve_record_pid(pid):
-    """Default function to resolve the pid to the record id."""
-    return pid
+    """Default function to resolve the pid to the record object."""
+    return None
 
 
 PRESERVATION_SYNC_PID_RESOLVER = resolve_record_pid
-"""Function to resolve the pid to the record id."""
-
-
-def can_read_permission(identity, pid):
-    """Define read permission for a record's preservation information."""
-    return True
-
-
-def can_write_permission(identity, pid):
-    """Define write permission for a record's preservation information."""
-    return True
-
-
-class PermissionPolicy:
-    """Class to define read and write permissions for preservation information."""
-
-    can_read = can_read_permission
-    can_write = can_write_permission
-
-
-PRESERVATION_SYNC_PERMISSION_POLICY = PermissionPolicy
-"""Define read and write PermissionPolicy."""
+"""Function to resolve the pid to the record object."""

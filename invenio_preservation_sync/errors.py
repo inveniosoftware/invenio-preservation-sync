@@ -13,16 +13,15 @@ class PreservationSyncError(Exception):
     """General Preservation-Sync error."""
 
 
-class InvalidSenderError(PreservationSyncError):
-    """Invalid preservation info sender error."""
+class PermissionDeniedError(PreservationSyncError):
+    """Not authorized to read preservation info."""
 
-    message = "Invalid sender for event."
+    message = "User does not have permission for the requested action."
 
-    def __init__(self, event=None, user=None, message=None):
+    def __init__(self, action_name=None, message=None):
         """Constructor."""
         super().__init__(message or self.message)
-        self.event = event
-        self.user = user
+        self.action_name = action_name
 
 
 class PreservationAlreadyReceivedError(PreservationSyncError):
@@ -34,14 +33,3 @@ class PreservationAlreadyReceivedError(PreservationSyncError):
         """Constructor."""
         super().__init__(message or self.message)
         self.preservation = preservation
-
-
-class MissingConfigError(PreservationSyncError):
-    """Mandatory configuration missing to use the module."""
-
-    message = "Mandatory configuration missing for the module."
-
-    def __init__(self, config=None, message=None):
-        """Constructor."""
-        super().__init__(message or self.message)
-        self.config = config

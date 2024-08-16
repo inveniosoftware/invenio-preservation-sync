@@ -24,8 +24,6 @@ class PreservationInfoAPI(object):
     It encapsulates the functionality for creating, retrieving, and managing them.
     """
 
-    query_order = "revision_id desc, archive_timestamp desc, created desc"
-
     @classmethod
     def create(
         cls,
@@ -36,11 +34,11 @@ class PreservationInfoAPI(object):
         archive_timestamp=None,
         uri=None,
         path=None,
-        event=None,
+        event_id=None,
         description=None,
     ):
         """Create a Preservation Information."""
-        status = PreservationInfoAPI.convert_status(status)
+        status = PreservationInfoAPI._convert_status(status)
         preservation = PreservationInfo(
             record_id=record_id,
             revision_id=revision_id,
@@ -49,7 +47,7 @@ class PreservationInfoAPI(object):
             archive_timestamp=archive_timestamp,
             uri=uri,
             path=path,
-            event=event,
+            event_id=event_id,
             description=description,
         )
 
@@ -58,22 +56,16 @@ class PreservationInfoAPI(object):
         return preservation
 
     @classmethod
-    def get_by_record_id(cls, record_id):
+    def get_by_record_id(cls, record_id=None, latest=False):
         """Get Preservation Info by record id."""
-        preservations = PreservationInfo.query.filter_by(record_id=record_id).order_by(
-            text(cls.query_order)
+        preservation = PreservationInfo.query.filter_by(record_id=record_id).order_by(
+            PreservationInfo.revision_id.desc(),
+            PreservationInfo.archive_timestamp.desc(),
+            PreservationInfo.created.desc(),
         )
-        return preservations
-
-    @classmethod
-    def get_latest_by_record_id(cls, record_id):
-        """Get latest Preservation Info for the given record id."""
-        preservation = (
-            PreservationInfo.query.filter_by(record_id=record_id)
-            .order_by(text(cls.query_order))
-            .first()
-        )
-        return preservation
+        if latest:
+            return preservation.first()
+        return preservation.all()
 
     @classmethod
     def get_existing_preservation(
@@ -98,11 +90,11 @@ class PreservationInfoAPI(object):
         harvest_timestamp=None,
         uri=None,
         path=None,
-        event=None,
+        event_id=None,
         description=None,
     ):
         """Update existing preservation."""
-        status = PreservationInfoAPI.convert_status(status)
+        status = PreservationInfoAPI._convert_status(status)
 
         if (
             preservation.status == status
@@ -128,36 +120,22 @@ class PreservationInfoAPI(object):
         if description:
             preservation.description = description
 
-        preservation.event = event
+        preservation.event_id = event_id
 
         db.session.commit()
 
     @classmethod
-    def convert_status(cls, value):
+    def _convert_status(cls, value):
         """Convert the status of the preservation info.
 
         Valid examples: "P", "Preserved", "preserved"
         """
-        if isinstance(value, str):
-            if value in [x.value for x in PreservationStatus]:
-                return PreservationStatus(value)
-            elif value.upper() in [x.name for x in PreservationStatus]:
-                return PreservationStatus[value.upper()]
-        elif isinstance(value, PreservationStatus):
+        if isinstance(value, PreservationStatus):
             return value
-        raise ValueError(
-            f"Invalid status value for the Preservation Status. Got: {value}"
-        )
-
-    @classmethod
-    def convert_to_dict(cls, preservation):
-        """Convert the results to dict."""
-        if isinstance(preservation, list):
-            res = []
-            for p in preservation:
-                res.append({c.name: getattr(p, c.name) for c in p.__table__.columns})
-            return res
-        return {
-            c.name: getattr(preservation, c.name)
-            for c in preservation.__table__.columns
-        }
+        elif isinstance(value, str):
+            upper_value = value.upper()
+            if PreservationStatus.has_key(upper_value):
+                return PreservationStatus[upper_value]
+            return PreservationStatus(value.upper())
+        else:
+            raise TypeError("Value must be a PreservationStatus or a string.")

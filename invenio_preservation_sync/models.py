@@ -18,47 +18,23 @@ from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import ChoiceType, JSONType, UUIDType
 
-PRESERVATION_STATUS_TITLES = {
-    "PRESERVED": _("Preserved"),
-    "PROCESSING": _("Processing"),
-    "FAILED": _("Failed"),
-    "DELETED": _("Deleted"),
-}
-
-PRESERVATION_STATUS_ICON = {
-    "PRESERVED": "check icon",
-    "PROCESSING": "spinner loading icon",
-    "FAILED": "times icon",
-    "DELETED": "times icon",
-}
-
-PRESERVATION_STATUS_COLOR = {
-    "PRESERVED": "positive",
-    "PROCESSING": "warning",
-    "FAILED": "negative",
-    "DELETED": "negative",
-}
-
 
 class PreservationStatus(str, Enum):
-    """Constants for possible status of a preservation."""
+    """Constants for possible statuses of a preservation."""
 
     __order__ = "PRESERVED PROCESSING FAILED DELETED"
 
     PRESERVED = "P"
-    """Release was successfully processed and published."""
+    """Record was successfully processed and preserved."""
 
     PROCESSING = "I"
-    """Release is still being processed."""
+    """Record is still being processed."""
 
     FAILED = "F"
-    """Release processing has failed."""
+    """Record preservation has failed."""
 
     DELETED = "D"
-    """Release has been deleted."""
-
-    def __init__(self, value):
-        """Hack."""
+    """Record preservation has been deleted."""
 
     def __eq__(self, other):
         """Equality test."""
@@ -68,20 +44,10 @@ class PreservationStatus(str, Enum):
         """Return its value."""
         return self.value
 
-    @property
-    def title(self):
-        """Return human readable title."""
-        return PRESERVATION_STATUS_TITLES[self.name]
-
-    @property
-    def icon(self):
-        """Font Awesome status icon."""
-        return PRESERVATION_STATUS_ICON[self.name]
-
-    @property
-    def color(self):
-        """UI status color."""
-        return PRESERVATION_STATUS_COLOR[self.name]
+    @classmethod
+    def has_key(cls, name):
+        """Return if name is in keys."""
+        return name in cls.__members__
 
 
 class PreservationInfo(db.Model, Timestamp):

@@ -8,11 +8,8 @@
 
 """Module tests."""
 
-import json
-from contextlib import contextmanager
-
-from flask import Flask, appcontext_pushed, g
-from invenio_webhooks.models import Event
+import mock
+from flask import Flask
 
 from invenio_preservation_sync import InvenioPreservationSync
 
@@ -24,43 +21,32 @@ def test_version():
     assert __version__
 
 
+def update_test_config(app):
+    app.config.update(
+        {
+            "PRESERVATION_SYNC_INTEGRATION_ENABLED": True,
+            "PRESERVATION_SYNC_PID_RESOLVER": lambda *args: None,
+            "PRESERVATION_SYNC_GET_LIST_PATH": "/records/<id>/preservations",
+            "PRESERVATION_SYNC_GET_LATEST_PATH": "/records/<id>/preservations/latest",
+            "PRESERVATION_SYNC_PERMISSION_POLICY": mock.Mock(),
+        }
+    )
+
+
 def test_init():
     """Test extension initialization."""
     app = Flask("testapp")
+    ext = InvenioPreservationSync(app)
+    assert "invenio-preservation-sync" not in app.extensions
+
+    app = Flask("testapp")
+    update_test_config(app)
     ext = InvenioPreservationSync(app)
     assert "invenio-preservation-sync" in app.extensions
 
     app = Flask("testapp")
     ext = InvenioPreservationSync()
     assert "invenio-preservation-sync" not in app.extensions
+    update_test_config(app)
     ext.init_app(app)
     assert "invenio-preservation-sync" in app.extensions
-
-
-"""
-def test_receiver(app, db, test_user, tester_id):
-    #Test preservation receiver.
-    payload = json.dumps(
-        {
-            "pid": "rhtwj-hee56",
-            "revision_id": "1",
-            "status": "P",
-            "uri": "https://oais-registry-test.web.cern.ch/abcd",
-            "path": "/eos/user/o/oais/luteus/aips/abcd",
-            "harvest_timestamp": "2024-07-30T23:57:18",
-            "archive_timestamp": "2024-07-31T23:57:18",
-            "description": {"compliance": "OAIS", "sender": "OAIS Platform"},
-        }
-    )
-    headers = [("Content-Type", "application/json")]
-
-    with app.test_request_context(headers=headers, data=payload):
-        event = Event.create(receiver_id="preservation", user_id=tester_id)
-        # Add event to session. Otherwise defaults are not added (e.g. response and response_code)
-        db.session.add(event)
-        db.session.commit()
-        event.process()
-
-    assert event.response_code == 202
-    # TODO validate PreservationInfo object created
-"""
