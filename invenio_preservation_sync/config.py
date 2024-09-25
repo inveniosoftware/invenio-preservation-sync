@@ -8,20 +8,17 @@
 
 """Configuration for Preservation Sync module."""
 
-PRESERVATION_SYNC_INTEGRATION_ENABLED = False
+PRESERVATION_SYNC_ENABLED = False
 """Enables the preservation sync integration."""
 
-PRESERVATION_SYNC_GET_LIST_PATH = "/records/<id>/preservations"
+PRESERVATION_SYNC_GET_LIST_PATH = "/records/<pid_id>/preservations"
 """API path to get the all preservation statuses."""
 
-PRESERVATION_SYNC_GET_LATEST_PATH = "/records/<id>/preservations/latest"
+PRESERVATION_SYNC_GET_LATEST_PATH = "/records/<pid_id>/preservations/latest"
 """API path to get the latest preservation status."""
 
+PRESERVATION_SYNC_PID_RESOLVER = None
+"""Function to resolve the pid to the object uuid."""
 
-def resolve_record_pid(pid):
-    """Default function to resolve the pid to the record object."""
-    return None
-
-
-PRESERVATION_SYNC_PID_RESOLVER = resolve_record_pid
-"""Function to resolve the pid to the record object."""
+PRESERVATION_SYNC_PERMISSION_POLICY = None
+"""Override the default permission policy to read and write preservation information."""

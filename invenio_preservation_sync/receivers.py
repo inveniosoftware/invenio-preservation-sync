@@ -8,14 +8,16 @@
 
 """Receiver for managing Preservation Sync events integration."""
 
+from flask import g
 from invenio_webhooks.models import Receiver
-from werkzeug.exceptions import BadRequest
+from marshmallow import ValidationError
 
-from invenio_preservation_sync.proxies import (
-    current_preservation_sync_service as service,
+from .errors import (
+    InvalidStatusError,
+    PermissionDeniedError,
+    PreservationAlreadyReceivedError,
 )
-
-from .errors import PermissionDeniedError, PreservationAlreadyReceivedError
+from .proxies import current_preservation_sync_service as service
 
 
 class PreservationSyncReceiver(Receiver):
@@ -24,22 +26,9 @@ class PreservationSyncReceiver(Receiver):
     def run(self, event):
         """Process an event."""
         try:
-            pid_id = event.payload.get("pid")
-            revision_id = event.payload.get("revision_id")
-            status = event.payload.get("status")
-
-            if not pid_id or not revision_id or not status:
-                raise BadRequest("Mandatory fields are missing from the request.")
-
-            service.preserve(
-                pid_id,
-                revision_id,
-                status,
-                archive_timestamp=event.payload.get("archive_timestamp"),
-                harvest_timestamp=event.payload.get("harvest_timestamp"),
-                uri=event.payload.get("uri"),
-                path=event.payload.get("path"),
-                description=event.payload.get("description"),
+            service.create_or_update(
+                identity=g.identity,
+                data=event.payload,
                 event_id=event.id,
             )
         except PreservationAlreadyReceivedError as e:
@@ -48,6 +37,6 @@ class PreservationSyncReceiver(Receiver):
         except PermissionDeniedError as e:
             event.response_code = 403
             event.response = dict(message=str(e), status=403)
-        except (BadRequest, TypeError, Exception) as e:
+        except (InvalidStatusError, ValidationError, Exception) as e:
             event.response_code = 400
             event.response = dict(message=str(e), status=400)

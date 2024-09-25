@@ -8,22 +8,32 @@
 
 """Permissions for the service layer to process the Preservation Sync requests."""
 
+from flask_principal import ActionNeed
+from invenio_records_permissions import BasePermissionPolicy
+from invenio_records_permissions.generators import Generator, SystemProcess
+from invenio_search.engine import dsl
 
-class DefaultPreservationInfoPermissionPolicy(object):
+archiver_action = ActionNeed("archiver")
+
+
+class Archiver(Generator):
+    """Allows system_process role."""
+
+    def needs(self, **kwargs):
+        """Enabling Needs."""
+        return [archiver_action]
+
+    def query_filter(self, identity=None, **kwargs):
+        """Filters for current identity as system process."""
+        for need in identity.provides:
+            if need == archiver_action:
+                return dsl.Q("match_all")
+        else:
+            return []
+
+
+class DefaultPreservationInfoPermissionPolicy(BasePermissionPolicy):
     """Default permission policy to read and write the PreservationInfo."""
 
-    def can_read(self, identity, record):
-        """Return if identity has permission to read the given record's preservation info."""
-        raise NotImplementedError()
-
-    def can_write(self, identity, record):
-        """Return if identity has permission to write the given record's preservation info."""
-        raise NotImplementedError()
-
-    def check_permission(self, identity, action_name, record):
-        """Return if identity has permission to execute the action on the given record."""
-        try:
-            has_permission = getattr(self, action_name)
-        except AttributeError:
-            return False
-        return has_permission(identity, record)
+    can_create = [Archiver(), SystemProcess()]
+    can_read = [Archiver(), SystemProcess()]

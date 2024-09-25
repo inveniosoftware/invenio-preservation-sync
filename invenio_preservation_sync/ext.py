@@ -8,9 +8,11 @@
 
 """Invenio module that adds Preservation Sync integration to the platform."""
 
-from invenio_preservation_sync.services.service import PreservationInfoService
-
 from . import config
+from .errors import MissingConfigError
+from .resources import PreservationInfoResource, PreservationInfoResourceConfig
+from .services import PreservationInfoService
+from .services.config import PreservationInfoServiceConfig
 
 
 class InvenioPreservationSync(object):
@@ -24,13 +26,28 @@ class InvenioPreservationSync(object):
     def init_app(self, app):
         """Flask application initialization."""
         self.init_config(app)
-        if self.is_enabled(app) and self.is_configured(app):
-            self.init_service(app)
-            app.extensions["invenio-preservation-sync"] = self
+        if self.is_enabled(app):
+            if self.is_configured(app):
+                self.init_service(app)
+                self.init_resources(app)
+                app.extensions["invenio-preservation-sync"] = self
+            else:
+                raise MissingConfigError("Configuration missing.")
 
     def init_service(self, app):
         """Initialize the service."""
-        self.service = PreservationInfoService()
+        self.service = PreservationInfoService(
+            config=PreservationInfoServiceConfig,
+            perm_policy_cls=app.config["PRESERVATION_SYNC_PERMISSION_POLICY"],
+        )
+
+    def init_resources(self, app):
+        """Initialize the resources for preservation info."""
+        self.preservation_info_resource = PreservationInfoResource(
+            config=PreservationInfoResourceConfig,
+            latest_path=app.config["PRESERVATION_SYNC_GET_LATEST_PATH"],
+            list_path=app.config["PRESERVATION_SYNC_GET_LIST_PATH"],
+        )
 
     def init_config(self, app):
         """Initialize configuration."""
@@ -40,18 +57,8 @@ class InvenioPreservationSync(object):
 
     def is_enabled(self, app):
         """Return whether the extension is enabled."""
-        return app.config.get("PRESERVATION_SYNC_INTEGRATION_ENABLED", False)
+        return app.config["PRESERVATION_SYNC_ENABLED"]
 
     def is_configured(self, app):
         """Return whether the extension is properly configured."""
-        return bool(
-            app.config.get("PRESERVATION_SYNC_PID_RESOLVER")
-            and app.config.get("PRESERVATION_SYNC_GET_LIST_PATH")
-            and app.config.get("PRESERVATION_SYNC_GET_LATEST_PATH")
-            and app.config.get("PRESERVATION_SYNC_PERMISSION_POLICY")
-        )
-
-
-def finalize_app(app):
-    """Finalize app."""
-    pass
+        return bool(app.config["PRESERVATION_SYNC_PID_RESOLVER"])

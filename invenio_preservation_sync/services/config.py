@@ -8,23 +8,18 @@
 
 """Configs for the service layer to process the Preservation Sync requests."""
 
-
-def can_read_permission(identity, pid):
-    """Define read permission for a record's preservation information."""
-    pass
-
-
-def can_write_permission(identity, pid):
-    """Define write permission for a record's preservation information."""
-    pass
+from ..models import PreservationInfoModel
+from .permissions import DefaultPreservationInfoPermissionPolicy
+from .results import PreservationInfoItem, PreservationInfoList
+from .schemas import PreservationInfoSchema
 
 
-class PermissionPolicy:
-    """Class to define read and write permissions for preservation information."""
+class PreservationInfoServiceConfig(object):
+    """Service factory configuration."""
 
-    can_read = can_read_permission
-    can_write = can_write_permission
+    result_item_cls = PreservationInfoItem
+    result_list_cls = PreservationInfoList
+    permission_policy_cls = DefaultPreservationInfoPermissionPolicy
+    schema = PreservationInfoSchema()
 
-
-PRESERVATION_SYNC_PERMISSION_POLICY = PermissionPolicy
-"""Override the default permission policy to read and write preservation information."""
+    record_cls = PreservationInfoModel

@@ -9,136 +9,79 @@
 """Service layer to process the Preservation Sync requests."""
 
 
-from flask import current_app, g
-from invenio_records_resources.services.uow import unit_of_work
+from flask import current_app
+from invenio_db.services.uow import unit_of_work
 
-from invenio_preservation_sync.api import PreservationInfoAPI
-from invenio_preservation_sync.errors import PermissionDeniedError
-from invenio_preservation_sync.services.permissions import (
-    DefaultPreservationInfoPermissionPolicy,
-)
-
-
-class PreservationInfoResult(object):
-    """Single PreservationInfo result."""
-
-    def __init__(self, preservation):
-        """Instantiate result item."""
-        self.revision_id = preservation.revision_id
-        self.status = preservation.status
-        self.archive_timestamp = preservation.archive_timestamp
-        self.harvest_timestamp = preservation.harvest_timestamp
-        self.uri = preservation.uri
-        self.path = preservation.path
-        self.description = preservation.description
-
-    def to_json(self):
-        """Convert the result item to JSON."""
-        return dict(
-            revision_id=self.revision_id,
-            status=self.status,
-            archive_timestamp=self.archive_timestamp,
-            harvest_timestamp=self.harvest_timestamp,
-            uri=self.uri,
-            path=self.path,
-            description=dict(self.description),
-        )
+from ..errors import PermissionDeniedError
 
 
 class PreservationInfoService(object):
     """Invenio Preservation Sync service."""
 
-    @property
-    def result_cls(self):
-        """Result item class."""
-        return PreservationInfoResult
-
-    def result_item(self, preservation):
-        """Return a result item."""
-        if isinstance(preservation, list):
-            return list(map(self.result_cls, preservation))
-        return self.result_cls(preservation)
-
-    @property
-    def permission_policy(self):
-        """Returns the permission policy class."""
-        permission_policy_class = current_app.config.get(
-            "PRESERVATION_SYNC_PERMISSION_POLICY",
-            DefaultPreservationInfoPermissionPolicy,
-        )
-        return permission_policy_class()
-
-    def require_permission(self, identity, action_name, record):
-        """Require a specific permission from the permission policy."""
-        if not self.permission_policy.check_permission(identity, action_name, record):
-            raise PermissionDeniedError(action_name)
+    def __init__(self, config=None, perm_policy_cls=None):
+        """Configuration."""
+        self.record_cls = config.record_cls
+        self.result_item = config.result_item_cls
+        self.result_list = config.result_list_cls
+        self.schema = config.schema
+        self.permission_policy = config.permission_policy_cls
+        if perm_policy_cls:
+            self.permission_policy = perm_policy_cls
 
     @property
     def pid_resolver(self):
         """Return the pid resolver function."""
-        return current_app.config.get(
-            "PRESERVATION_SYNC_PID_RESOLVER",
-        )
+        return current_app.config["PRESERVATION_SYNC_PID_RESOLVER"]
+
+    def check_permission(self, identity, action_name, **kwargs):
+        """Check a permission against the identity."""
+        return self.permission_policy(action_name, **kwargs).allows(identity)
+
+    def require_permission(self, identity, action_name, **kwargs):
+        """Require a specific permission from the permission policy."""
+        if not self.check_permission(identity, action_name, **kwargs):
+            raise PermissionDeniedError(action_name)
 
     @unit_of_work()
-    def preserve(
+    def create_or_update(
         self,
-        pid_id,
-        revision_id,
-        status,
-        archive_timestamp=None,
-        harvest_timestamp=None,
-        uri=None,
-        path=None,
-        description=None,
+        identity,
+        data,
         event_id=None,
         uow=None,
     ):
         """Process the preservation event info."""
-        record = self.pid_resolver(pid_id)
+        valid_data = self.schema.load(data)
 
-        self.require_permission(g.identity, "can_write", record)
+        object_uuid = self.pid_resolver(valid_data.get("pid"))
 
-        archive_timestamp = archive_timestamp
+        self.require_permission(identity, "create")
 
-        existing_preservation = PreservationInfoAPI.get_existing_preservation(
-            record_id=record.id,
-            revision_id=revision_id,
-            archive_timestamp=archive_timestamp,
+        existing_preservation = self.record_cls.get_existing_preservation(
+            object_uuid=object_uuid, data=valid_data
         )
 
         if existing_preservation:
-            PreservationInfoAPI.update_existing_preservation(
-                preservation=existing_preservation,
-                status=status,
-                harvest_timestamp=harvest_timestamp,
-                uri=uri,
-                path=path,
-                description=description,
+            preservation = self.record_cls.update_existing_preservation(
+                obj=existing_preservation,
+                data=valid_data,
                 event_id=event_id,
             )
         else:
-            PreservationInfoAPI.create(
-                record_id=record.id,
-                revision_id=revision_id,
-                status=status,
-                harvest_timestamp=harvest_timestamp,
-                archive_timestamp=archive_timestamp,
-                uri=uri,
-                path=path,
-                event_id=event_id,
-                description=description,
+            preservation = self.record_cls.create(
+                object_uuid=object_uuid, data=valid_data, event_id=event_id
             )
 
-    @unit_of_work()
-    def get_by_record_id(self, pid_id=None, latest=False, uow=None):
+        return self.result_item(preservation, schema=self.schema)
+
+    def read(self, identity, id, latest=False):
         """Returns preservation info based on the record id."""
-        record = self.pid_resolver(pid_id)
+        object_uuid = self.pid_resolver(id)
 
-        self.require_permission(g.identity, "can_read", record)
+        self.require_permission(identity, "read")
 
-        preservation = PreservationInfoAPI.get_by_record_id(record.id, latest=latest)
-        if preservation:
-            return self.result_item(preservation)
+        preservation = self.record_cls.get(object_uuid, latest=latest)
+        if latest:
+            return self.result_item(preservation, schema=self.schema)
         else:
-            return None
+            return self.result_list(preservation, schema=self.schema)

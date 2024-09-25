@@ -11,8 +11,8 @@
 import json
 
 
-def test_send_bad_preservations(app, client, archiver, access_token_headers):
-    """Test bad preservation event request."""
+def test_send_wrong_pid(app, client, archiver, access_token_headers):
+    """Test wrong pid preservation event request."""
     client = archiver.login(client)
 
     payload = json.dumps(
@@ -35,7 +35,12 @@ def test_send_bad_preservations(app, client, archiver, access_token_headers):
     )
     assert r.status_code == 400
 
-    payload = json.dumps({"pid": "restricted_pid", "revision_id": "1"})
+
+def test_send_missing_field(app, client, archiver, access_token_headers):
+    """Test missing mandatory field preservation event."""
+    client = archiver.login(client)
+
+    payload = json.dumps({"pid": "test_pid", "revision_id": "1"})
     r = client.post(
         "hooks/receivers/preservation/events",
         follow_redirects=True,
@@ -44,9 +49,12 @@ def test_send_bad_preservations(app, client, archiver, access_token_headers):
     )
     assert r.status_code == 400
 
-    payload = json.dumps(
-        {"pid": "restricted_pid", "revision_id": "1", "status": "invalid"}
-    )
+
+def test_send_invalid_status(app, client, archiver, access_token_headers):
+    """Test invalid status preservation event."""
+    client = archiver.login(client)
+
+    payload = json.dumps({"pid": "test_pid", "revision_id": "1", "status": "invalid"})
     r = client.post(
         "hooks/receivers/preservation/events",
         follow_redirects=True,
@@ -54,3 +62,29 @@ def test_send_bad_preservations(app, client, archiver, access_token_headers):
         data=payload,
     )
     assert r.status_code == 400
+
+
+def test_send_invalid_request_key(app, client, archiver, access_token_headers):
+    """Test invalid request key preservation event."""
+    client = archiver.login(client)
+
+    payload = json.dumps({"invalid_key": "test_pid", "revision_id": "1", "status": "P"})
+    r = client.post(
+        "hooks/receivers/preservation/events",
+        follow_redirects=True,
+        headers=access_token_headers,
+        data=payload,
+    )
+    assert r.status_code == 400
+
+
+def test_send_missing_authorization(app, client, headers):
+    """Test missing token preservation event."""
+    payload = json.dumps({"pid": "test_pid", "revision_id": "1", "status": "P"})
+    r = client.post(
+        "hooks/receivers/preservation/events",
+        follow_redirects=True,
+        headers=headers,
+        data=payload,
+    )
+    assert r.status_code == 401

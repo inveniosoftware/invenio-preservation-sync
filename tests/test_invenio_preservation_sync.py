@@ -8,7 +8,6 @@
 
 """Module tests."""
 
-import mock
 from flask import Flask
 
 from invenio_preservation_sync import InvenioPreservationSync
@@ -24,11 +23,8 @@ def test_version():
 def update_test_config(app):
     app.config.update(
         {
-            "PRESERVATION_SYNC_INTEGRATION_ENABLED": True,
+            "PRESERVATION_SYNC_ENABLED": True,
             "PRESERVATION_SYNC_PID_RESOLVER": lambda *args: None,
-            "PRESERVATION_SYNC_GET_LIST_PATH": "/records/<id>/preservations",
-            "PRESERVATION_SYNC_GET_LATEST_PATH": "/records/<id>/preservations/latest",
-            "PRESERVATION_SYNC_PERMISSION_POLICY": mock.Mock(),
         }
     )
 

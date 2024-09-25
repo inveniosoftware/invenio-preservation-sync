@@ -12,11 +12,16 @@ import uuid
 from enum import Enum
 
 from invenio_db import db
-from invenio_i18n import lazy_gettext as _
 from invenio_webhooks.models import Event
-from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy.dialects import postgresql
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import ChoiceType, JSONType, UUIDType
+
+from .errors import (
+    InvalidStatusError,
+    PreservationAlreadyReceivedError,
+    PreservationInfoNotFoundError,
+)
 
 
 class PreservationStatus(str, Enum):
@@ -44,13 +49,8 @@ class PreservationStatus(str, Enum):
         """Return its value."""
         return self.value
 
-    @classmethod
-    def has_key(cls, name):
-        """Return if name is in keys."""
-        return name in cls.__members__
 
-
-class PreservationInfo(db.Model, Timestamp):
+class PreservationInfoModel(db.Model, Timestamp):
     """Information about the preservation."""
 
     __tablename__ = "preservation_info"
@@ -62,7 +62,7 @@ class PreservationInfo(db.Model, Timestamp):
     )
     """Preservation Info identifier."""
 
-    record_id = db.Column(
+    object_uuid = db.Column(
         UUIDType,
         index=True,
         nullable=False,
@@ -84,7 +84,7 @@ class PreservationInfo(db.Model, Timestamp):
     """Status of the preservation, e.g. 'preserved', 'processing', 'failed', etc."""
 
     harvest_timestamp = db.Column(
-        db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
+        db.DateTime,
         unique=False,
         index=False,
         nullable=True,
@@ -92,7 +92,7 @@ class PreservationInfo(db.Model, Timestamp):
     """Timestamp when the record's data was harvested."""
 
     archive_timestamp = db.Column(
-        db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
+        db.DateTime,
         unique=False,
         index=True,
         nullable=True,
@@ -128,3 +128,88 @@ class PreservationInfo(db.Model, Timestamp):
     """Additional details in JSON format"""
 
     event = db.relationship(Event)
+
+    @classmethod
+    def create(cls, object_uuid, data, event_id):
+        """Create a preservation info object."""
+        status = cls._convert_status(data.get("status"))
+        obj = cls(
+            object_uuid=object_uuid,
+            revision_id=data.get("revision_id"),
+            status=status,
+            harvest_timestamp=data.get("harvest_timestamp"),
+            archive_timestamp=data.get("archive_timestamp"),
+            uri=data.get("uri"),
+            path=data.get("path"),
+            event_id=event_id,
+            description=data.get("description"),
+        )
+
+        db.session.add(obj)
+        return obj
+
+    @classmethod
+    def get(cls, object_uuid, latest=False):
+        """Get preservation info by object uuid."""
+        obj = cls.query.filter_by(object_uuid=object_uuid).order_by(
+            cls.revision_id.desc(),
+            cls.archive_timestamp.desc(),
+            cls.created.desc(),
+        )
+        if latest:
+            if obj.count() > 0:
+                return obj.first()
+            else:
+                raise PreservationInfoNotFoundError()
+        return obj.all()
+
+    @classmethod
+    def get_existing_preservation(cls, object_uuid, data):
+        """Return preservation info if it already exists."""
+        obj = PreservationInfoModel.query.filter_by(
+            object_uuid=object_uuid,
+            revision_id=data.get("revision_id"),
+            archive_timestamp=data.get("archive_timestamp"),
+        ).first()
+        return obj
+
+    @classmethod
+    def update_existing_preservation(
+        cls,
+        obj,
+        data,
+        event_id=None,
+    ):
+        """Update existing preservation."""
+        status = cls._convert_status(data.get("status"))
+
+        if (
+            obj.status == status
+            and obj.harvest_timestamp == data.get("harvest_timestamp")
+            and obj.uri == data.get("uri")
+            and obj.path == data.get("path")
+            and obj.description == data.get("description")
+        ):
+            raise PreservationAlreadyReceivedError(obj)
+
+        obj.status = status
+        obj.harvest_timestamp = data.get("harvest_timestamp")
+        obj.uri = data.get("uri")
+        obj.path = data.get("path")
+        obj.description = data.get("description")
+        obj.event_id = event_id
+        db.session.add(obj)
+
+        return obj
+
+    @classmethod
+    def _convert_status(cls, value):
+        """Convert the status of the preservation info."""
+        if isinstance(value, PreservationStatus):
+            return value
+        elif isinstance(value, str):
+            return PreservationStatus(value.upper())
+        else:
+            raise InvalidStatusError(
+                f"Status value must be a PreservationStatus or a string. Got {value}"
+            )
