@@ -132,10 +132,10 @@ class PreservationInfoModel(db.Model, Timestamp):
     @classmethod
     def create(cls, object_uuid, data, event_id):
         """Create a preservation info object."""
-        status = cls._convert_status(data.get("status"))
+        status = cls._convert_status(data["status"])
         obj = cls(
             object_uuid=object_uuid,
-            revision_id=data.get("revision_id"),
+            revision_id=data["revision_id"],
             status=status,
             harvest_timestamp=data.get("harvest_timestamp"),
             archive_timestamp=data.get("archive_timestamp"),
@@ -144,34 +144,29 @@ class PreservationInfoModel(db.Model, Timestamp):
             event_id=event_id,
             description=data.get("description"),
         )
-
-        db.session.add(obj)
         return obj
 
     @classmethod
-    def get(cls, object_uuid, latest=False):
+    def get(cls, object_uuid, latest=False, pid=None):
         """Get preservation info by object uuid."""
         obj = cls.query.filter_by(object_uuid=object_uuid).order_by(
             cls.revision_id.desc(),
             cls.archive_timestamp.desc(),
             cls.created.desc(),
         )
-        if latest:
-            if obj.count() > 0:
-                return obj.first()
-            else:
-                raise PreservationInfoNotFoundError()
-        return obj.all()
+        results = obj.first() if latest else obj.all()
+        if not results and latest:
+            raise PreservationInfoNotFoundError(pid=pid)
+        return results
 
     @classmethod
     def get_existing_preservation(cls, object_uuid, data):
         """Return preservation info if it already exists."""
-        obj = PreservationInfoModel.query.filter_by(
+        return PreservationInfoModel.query.filter_by(
             object_uuid=object_uuid,
-            revision_id=data.get("revision_id"),
+            revision_id=data["revision_id"],
             archive_timestamp=data.get("archive_timestamp"),
         ).first()
-        return obj
 
     @classmethod
     def update_existing_preservation(
@@ -181,7 +176,7 @@ class PreservationInfoModel(db.Model, Timestamp):
         event_id=None,
     ):
         """Update existing preservation."""
-        status = cls._convert_status(data.get("status"))
+        status = cls._convert_status(data["status"])
 
         if (
             obj.status == status
@@ -190,7 +185,7 @@ class PreservationInfoModel(db.Model, Timestamp):
             and obj.path == data.get("path")
             and obj.description == data.get("description")
         ):
-            raise PreservationAlreadyReceivedError(obj)
+            raise PreservationAlreadyReceivedError(data["pid"])
 
         obj.status = status
         obj.harvest_timestamp = data.get("harvest_timestamp")
@@ -198,7 +193,6 @@ class PreservationInfoModel(db.Model, Timestamp):
         obj.path = data.get("path")
         obj.description = data.get("description")
         obj.event_id = event_id
-        db.session.add(obj)
 
         return obj
 

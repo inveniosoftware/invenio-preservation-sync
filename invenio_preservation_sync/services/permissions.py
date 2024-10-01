@@ -11,7 +11,6 @@
 from flask_principal import ActionNeed
 from invenio_records_permissions import BasePermissionPolicy
 from invenio_records_permissions.generators import Generator, SystemProcess
-from invenio_search.engine import dsl
 
 archiver_action = ActionNeed("archiver")
 
@@ -24,12 +23,8 @@ class Archiver(Generator):
         return [archiver_action]
 
     def query_filter(self, identity=None, **kwargs):
-        """Filters for current identity as system process."""
-        for need in identity.provides:
-            if need == archiver_action:
-                return dsl.Q("match_all")
-        else:
-            return []
+        """Query filter for can_search permission."""
+        raise NotImplementedError()
 
 
 class DefaultPreservationInfoPermissionPolicy(BasePermissionPolicy):

@@ -88,3 +88,23 @@ def test_send_missing_authorization(app, client, headers):
         data=payload,
     )
     assert r.status_code == 401
+
+
+def test_send_valid_event(app, client, archiver, access_token_headers):
+    """Test valid preservation event."""
+    client = archiver.login(client)
+
+    payload = json.dumps({"pid": "test_pid", "revision_id": "1", "status": "P"})
+    r = client.post(
+        "hooks/receivers/preservation/events",
+        follow_redirects=True,
+        headers=access_token_headers,
+        data=payload,
+    )
+    assert r.status_code == 202
+
+    r = client.get("/records/test_pid/preservations", headers=access_token_headers)
+    assert r.status_code == 200
+    assert r.json["hits"]["total"] == 1
+    assert r.json["hits"]["hits"][0]["revision_id"] == 1
+    assert r.json["hits"]["hits"][0]["status"] == "P"

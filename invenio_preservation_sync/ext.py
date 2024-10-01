@@ -9,7 +9,6 @@
 """Invenio module that adds Preservation Sync integration to the platform."""
 
 from . import config
-from .errors import MissingConfigError
 from .resources import PreservationInfoResource, PreservationInfoResourceConfig
 from .services import PreservationInfoService
 from .services.config import PreservationInfoServiceConfig
@@ -26,13 +25,11 @@ class InvenioPreservationSync(object):
     def init_app(self, app):
         """Flask application initialization."""
         self.init_config(app)
+        self.init_service(app)
+        self.init_resources(app)
+        app.extensions["invenio-preservation-sync"] = self
         if self.is_enabled(app):
-            if self.is_configured(app):
-                self.init_service(app)
-                self.init_resources(app)
-                app.extensions["invenio-preservation-sync"] = self
-            else:
-                raise MissingConfigError("Configuration missing.")
+            app.register_blueprint(self.preservation_info_resource.as_blueprint())
 
     def init_service(self, app):
         """Initialize the service."""
@@ -58,7 +55,3 @@ class InvenioPreservationSync(object):
     def is_enabled(self, app):
         """Return whether the extension is enabled."""
         return app.config["PRESERVATION_SYNC_ENABLED"]
-
-    def is_configured(self, app):
-        """Return whether the extension is properly configured."""
-        return bool(app.config["PRESERVATION_SYNC_PID_RESOLVER"])

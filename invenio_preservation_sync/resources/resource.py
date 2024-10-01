@@ -29,7 +29,7 @@ class PreservationInfoResource(ErrorHandlersMixin, Resource):
 
     def __init__(self, config, latest_path=None, list_path=None):
         """Constructor."""
-        super(PreservationInfoResource, self).__init__(config)
+        super().__init__(config)
         self.latest_route = latest_path
         self.list_route = list_path
 

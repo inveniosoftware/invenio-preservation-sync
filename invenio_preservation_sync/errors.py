@@ -19,54 +19,53 @@ class PreservationSyncError(Exception):
 class PermissionDeniedError(PreservationSyncError):
     """Not authorized to read preservation info."""
 
-    message = "User does not have permission for the requested action."
+    message = "User does not have permission for the requested action: {action}."
 
-    def __init__(self, action_name=None, message=None):
+    def __init__(self, action=None, message=None):
         """Constructor."""
-        super().__init__(message or self.message)
-        self.action_name = action_name
+        super().__init__(message or self.message.format(action=action))
 
 
 class PreservationAlreadyReceivedError(PreservationSyncError):
     """Same preservation info already received error."""
 
-    message = "The preservation info has already been received."
+    message = (
+        "The same preservation info has already been received for the given PID: {pid}."
+    )
 
-    def __init__(self, preservation=None, message=None):
+    def __init__(self, pid=None, message=None):
         """Constructor."""
-        super().__init__(message or self.message)
-        self.preservation = preservation
-
-
-class MissingConfigError(PreservationSyncError):
-    """Mandatory configuration missing error."""
-
-    message = "Mandatory config is missing to enable Preservation Sync."
-
-    def __init__(self, message=None):
-        """Constructor."""
-        super().__init__(message or self.message)
+        super().__init__(message or self.message.format(pid=pid))
 
 
 class PreservationInfoNotFoundError(PreservationSyncError):
     """Preservation Info not found error."""
 
-    message = "No preservation info was found for the given PID."
+    message = "No preservation info was found for the PID: {pid}."
 
-    def __init__(self, message=None):
+    def __init__(self, pid=None, message=None):
         """Constructor."""
-        super().__init__(message or self.message)
+        super().__init__(message or self.message.format(pid=pid))
 
 
 class InvalidStatusError(PreservationSyncError):
     """Invalid status error."""
 
-    message = "The given status was not valid."
+    message = "The given status was not valid: {status}."
 
     def __init__(self, status=None, message=None):
         """Constructor."""
+        super().__init__(message or self.message.format(status=status))
+
+
+class ModuleDisabledError(PreservationSyncError):
+    """Module disabled error."""
+
+    message = "The preservation-sync module is not enabled, see PRESERVATION_SYNC_ENABLED config"
+
+    def __init__(self, message=None):
+        """Constructor."""
         super().__init__(message or self.message)
-        self.status = status
 
 
 class ErrorHandlersMixin:
@@ -95,6 +94,12 @@ class ErrorHandlersMixin:
             lambda e: HTTPJSONException(
                 code=404,
                 description=e.message,
+            )
+        ),
+        AssertionError: create_error_handler(
+            lambda e: HTTPJSONException(
+                code=503,
+                description=str(e),
             )
         ),
     }

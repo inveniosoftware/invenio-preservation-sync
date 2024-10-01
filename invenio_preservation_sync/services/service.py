@@ -10,7 +10,7 @@
 
 
 from flask import current_app
-from invenio_db.services.uow import unit_of_work
+from invenio_db.services.uow import ModelCommitOp, unit_of_work
 
 from ..errors import PermissionDeniedError
 
@@ -31,7 +31,11 @@ class PreservationInfoService(object):
     @property
     def pid_resolver(self):
         """Return the pid resolver function."""
-        return current_app.config["PRESERVATION_SYNC_PID_RESOLVER"]
+        pid_resolver_config_str = "PRESERVATION_SYNC_PID_RESOLVER"
+        assert current_app.config[pid_resolver_config_str], (
+            "Missing config: " + pid_resolver_config_str
+        )
+        return current_app.config[pid_resolver_config_str]
 
     def check_permission(self, identity, action_name, **kwargs):
         """Check a permission against the identity."""
@@ -72,6 +76,7 @@ class PreservationInfoService(object):
                 object_uuid=object_uuid, data=valid_data, event_id=event_id
             )
 
+        uow.register(ModelCommitOp(preservation))
         return self.result_item(preservation, schema=self.schema)
 
     def read(self, identity, id, latest=False):
@@ -80,7 +85,7 @@ class PreservationInfoService(object):
 
         self.require_permission(identity, "read")
 
-        preservation = self.record_cls.get(object_uuid, latest=latest)
+        preservation = self.record_cls.get(object_uuid, latest=latest, pid=id)
         if latest:
             return self.result_item(preservation, schema=self.schema)
         else:

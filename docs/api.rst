@@ -11,9 +11,3 @@ API Docs
 
 .. automodule:: invenio_preservation_sync.ext
    :members:
-
-Views
------
-
-.. automodule:: invenio_preservation_sync.views
-   :members:
