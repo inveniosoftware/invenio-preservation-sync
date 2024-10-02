@@ -10,7 +10,7 @@
 
 
 from flask import current_app
-from invenio_db.services.uow import ModelCommitOp, unit_of_work
+from invenio_db.uow import ModelCommitOp, unit_of_work
 
 from ..errors import PermissionDeniedError
 
