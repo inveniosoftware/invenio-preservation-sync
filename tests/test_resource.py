@@ -19,6 +19,14 @@ def test_permission_denied(app, client, headers):
     assert r.status_code == 403
 
 
+def test_get_invalid_pid(app, client, headers):
+    """Test permission denied on get request."""
+    r = client.get("/records/invalid_pid/preservations", headers=headers)
+    assert r.status_code == 404
+    r = client.get("/records/invalid_pid/preservations/latest", headers=headers)
+    assert r.status_code == 404
+
+
 def test_get_preservations(app, client, archiver, headers, access_token_headers):
     """Test createm update and get preservation events."""
     client = archiver.login(client)

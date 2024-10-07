@@ -20,6 +20,7 @@ from invenio_access.models import ActionRoles
 from invenio_accounts.models import Role
 from invenio_app.factory import create_api as _create_api
 from invenio_oauth2server.models import Token
+from invenio_pidstore.errors import PIDDoesNotExistError
 
 
 @pytest.fixture(scope="module")
@@ -47,7 +48,7 @@ def test_resolve_record_pid(pid):
     """PID resolver."""
     if pid == "test_pid":
         return TEST_UUID
-    raise Exception("PID does not exists.")
+    raise PIDDoesNotExistError("recid", pid)
 
 
 @pytest.fixture()

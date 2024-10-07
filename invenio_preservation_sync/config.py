@@ -18,7 +18,7 @@ PRESERVATION_SYNC_GET_LATEST_PATH = "/records/<pid_id>/preservations/latest"
 """API path to get the latest preservation status."""
 
 PRESERVATION_SYNC_PID_RESOLVER = None
-"""Function to resolve the pid to the object uuid."""
+"""Function to resolve the pid to the object uuid. Raise PIDDoesNotExistError if cannot be done."""
 
 PRESERVATION_SYNC_PERMISSION_POLICY = None
 """Override the default permission policy to read and write preservation information."""

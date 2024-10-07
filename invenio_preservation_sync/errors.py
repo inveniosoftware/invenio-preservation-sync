@@ -10,6 +10,7 @@
 
 import marshmallow as ma
 from flask_resources import HTTPJSONException, create_error_handler
+from invenio_pidstore.errors import PIDDoesNotExistError
 
 
 class PreservationSyncError(Exception):
@@ -94,6 +95,12 @@ class ErrorHandlersMixin:
             lambda e: HTTPJSONException(
                 code=404,
                 description=e.message,
+            )
+        ),
+        PIDDoesNotExistError: create_error_handler(
+            lambda e: HTTPJSONException(
+                code=404,
+                description=str(e),
             )
         ),
         AssertionError: create_error_handler(

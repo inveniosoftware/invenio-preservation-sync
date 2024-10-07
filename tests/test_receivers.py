@@ -11,8 +11,8 @@
 import json
 
 
-def test_send_wrong_pid(app, client, archiver, access_token_headers):
-    """Test wrong pid preservation event request."""
+def test_send_invalid_pid(app, client, archiver, access_token_headers):
+    """Test invalid pid preservation event request."""
     client = archiver.login(client)
 
     payload = json.dumps(
@@ -33,7 +33,7 @@ def test_send_wrong_pid(app, client, archiver, access_token_headers):
         headers=access_token_headers,
         data=payload,
     )
-    assert r.status_code == 400
+    assert r.status_code == 404
 
 
 def test_send_missing_field(app, client, archiver, access_token_headers):

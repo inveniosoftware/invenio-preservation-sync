@@ -9,5 +9,14 @@
 API Docs
 ========
 
-.. automodule:: invenio_preservation_sync.ext
+Receivers
+---------
+
+.. automodule:: invenio_preservation_sync.receivers
    :members:
+
+Resources
+---------
+
+.. automodule:: invenio_preservation_sync.resources.resource
+    :members:
