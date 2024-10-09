@@ -24,6 +24,7 @@ class PermissionDeniedError(PreservationSyncError):
 
     def __init__(self, action=None, message=None):
         """Constructor."""
+        self.message = self.message.format(action=action)
         super().__init__(message or self.message.format(action=action))
 
 
@@ -36,7 +37,8 @@ class PreservationAlreadyReceivedError(PreservationSyncError):
 
     def __init__(self, pid=None, message=None):
         """Constructor."""
-        super().__init__(message or self.message.format(pid=pid))
+        self.message = self.message.format(pid=pid)
+        super().__init__(message or self.message)
 
 
 class PreservationInfoNotFoundError(PreservationSyncError):
@@ -46,7 +48,8 @@ class PreservationInfoNotFoundError(PreservationSyncError):
 
     def __init__(self, pid=None, message=None):
         """Constructor."""
-        super().__init__(message or self.message.format(pid=pid))
+        self.message = self.message.format(pid=pid)
+        super().__init__(message or self.message)
 
 
 class InvalidStatusError(PreservationSyncError):
@@ -56,7 +59,8 @@ class InvalidStatusError(PreservationSyncError):
 
     def __init__(self, status=None, message=None):
         """Constructor."""
-        super().__init__(message or self.message.format(status=status))
+        self.message = self.message.format(status=status)
+        super().__init__(message or self.message)
 
 
 class ModuleDisabledError(PreservationSyncError):

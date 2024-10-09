@@ -19,7 +19,6 @@ from flask_resources import (
 )
 
 from ..errors import ErrorHandlersMixin
-from ..proxies import current_preservation_sync_service as service
 
 request_view_args = request_parser(from_conf("request_view_args"), location="view_args")
 
@@ -27,9 +26,10 @@ request_view_args = request_parser(from_conf("request_view_args"), location="vie
 class PreservationInfoResource(ErrorHandlersMixin, Resource):
     """Preservation Info resource."""
 
-    def __init__(self, config, latest_path=None, list_path=None):
+    def __init__(self, config, service, latest_path=None, list_path=None):
         """Constructor."""
         super().__init__(config)
+        self.service = service
         self.latest_route = latest_path
         self.list_route = list_path
 
@@ -68,7 +68,7 @@ class PreservationInfoResource(ErrorHandlersMixin, Resource):
         * **503** - Mandatory config was missing.
         """
         pid_id = resource_requestctx.view_args["pid_id"]
-        preservation = service.read(g.identity, pid_id, latest=True)
+        preservation = self.service.read(g.identity, pid_id, latest=True)
         return preservation.to_dict(), 200
 
     @request_view_args
@@ -88,5 +88,5 @@ class PreservationInfoResource(ErrorHandlersMixin, Resource):
         * **503** - Mandatory config was missing.
         """
         pid_id = resource_requestctx.view_args["pid_id"]
-        preservations = service.read(g.identity, pid_id)
+        preservations = self.service.read(g.identity, pid_id)
         return preservations.to_dict(), 200

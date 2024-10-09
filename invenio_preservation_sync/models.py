@@ -73,7 +73,7 @@ class PreservationInfoModel(db.Model, Timestamp):
     revision_id = db.Column(
         db.Integer,
         index=True,
-        nullable=False,
+        nullable=True,
         unique=False,
     )
 
@@ -135,7 +135,7 @@ class PreservationInfoModel(db.Model, Timestamp):
         status = cls._convert_status(data["status"])
         obj = cls(
             object_uuid=object_uuid,
-            revision_id=data["revision_id"],
+            revision_id=data.get("revision_id"),
             status=status,
             harvest_timestamp=data.get("harvest_timestamp"),
             archive_timestamp=data.get("archive_timestamp"),
@@ -150,9 +150,9 @@ class PreservationInfoModel(db.Model, Timestamp):
     def get(cls, object_uuid, latest=False, pid=None):
         """Get preservation info by object uuid."""
         obj = cls.query.filter_by(object_uuid=object_uuid).order_by(
+            cls.created.desc(),
             cls.revision_id.desc(),
             cls.archive_timestamp.desc(),
-            cls.created.desc(),
         )
         results = obj.first() if latest else obj.all()
         if not results and latest:
@@ -162,11 +162,13 @@ class PreservationInfoModel(db.Model, Timestamp):
     @classmethod
     def get_existing_preservation(cls, object_uuid, data):
         """Return preservation info if it already exists."""
-        return PreservationInfoModel.query.filter_by(
-            object_uuid=object_uuid,
-            revision_id=data["revision_id"],
-            archive_timestamp=data.get("archive_timestamp"),
-        ).first()
+        if data.get("revision_id") and data.get("archive_timestamp"):
+            return PreservationInfoModel.query.filter_by(
+                object_uuid=object_uuid,
+                revision_id=data.get("revision_id"),
+                archive_timestamp=data.get("archive_timestamp"),
+            ).first()
+        return None
 
     @classmethod
     def update_existing_preservation(

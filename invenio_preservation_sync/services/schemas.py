@@ -20,8 +20,8 @@ class PreservationInfoSchema(Schema):
     """Schema for a Preservation Info object."""
 
     pid = fields.String(required=True)
-    revision_id = fields.Integer(required=True)
     status = fields.Enum(PreservationStatus, required=True, by_value=True)
+    revision_id = fields.Integer()
     archive_timestamp = TZDateTime(timezone=timezone.utc, format="iso")
     harvest_timestamp = TZDateTime(timezone=timezone.utc, format="iso")
     uri = fields.String()

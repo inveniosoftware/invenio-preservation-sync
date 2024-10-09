@@ -33,8 +33,8 @@ class PreservationSyncReceiver(Receiver):
         :param event: Payload contains request body params:
 
         * **pid_id**: PersistentIdentifier ID.
-        * **revision_id**: Revision identifier.
         * **status**: Preservation status. ("P", "F", "I", "D")
+        * **revision_id**: Revision identifier.
         * **harvest_timestamp**: Time of harvest. (optional)
         * **archive_timestamp**: Time of archival. (optional)
         * **uri**: URI for the preservation. (optional)

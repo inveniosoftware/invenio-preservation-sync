@@ -42,6 +42,7 @@ class InvenioPreservationSync(object):
         """Initialize the resources for preservation info."""
         self.preservation_info_resource = PreservationInfoResource(
             config=PreservationInfoResourceConfig,
+            service=self.service,
             latest_path=app.config["PRESERVATION_SYNC_GET_LATEST_PATH"],
             list_path=app.config["PRESERVATION_SYNC_GET_LIST_PATH"],
         )

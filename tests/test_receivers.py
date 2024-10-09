@@ -40,7 +40,7 @@ def test_send_missing_field(app, client, archiver, access_token_headers):
     """Test missing mandatory field preservation event."""
     client = archiver.login(client)
 
-    payload = json.dumps({"pid": "test_pid", "revision_id": "1"})
+    payload = json.dumps({"pid": "test_pid"})
     r = client.post(
         "hooks/receivers/preservation/events",
         follow_redirects=True,
@@ -90,11 +90,11 @@ def test_send_missing_authorization(app, client, headers):
     assert r.status_code == 401
 
 
-def test_send_valid_event(app, client, archiver, access_token_headers):
+def test_send_valid_minimal_event(app, client, archiver, access_token_headers):
     """Test valid preservation event."""
     client = archiver.login(client)
 
-    payload = json.dumps({"pid": "test_pid", "revision_id": "1", "status": "P"})
+    payload = json.dumps({"pid": "test_pid", "status": "P"})
     r = client.post(
         "hooks/receivers/preservation/events",
         follow_redirects=True,
@@ -106,5 +106,4 @@ def test_send_valid_event(app, client, archiver, access_token_headers):
     r = client.get("/records/test_pid/preservations", headers=access_token_headers)
     assert r.status_code == 200
     assert r.json["hits"]["total"] == 1
-    assert r.json["hits"]["hits"][0]["revision_id"] == 1
     assert r.json["hits"]["hits"][0]["status"] == "P"
