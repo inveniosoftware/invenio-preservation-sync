@@ -29,5 +29,8 @@ PRESERVATION_SYNC_UI_TITLE = "Preservation Platform"
 PRESERVATION_SYNC_UI_LINK = None
 """Override the link shown on the UI."""
 
+PRESERVATION_SYNC_UI_MANAGER_LINK_OVERRIDE = True
+"""If True, PRESERVATION_SYNC_UI_LINK value is used, if False then uri field for can_manage permission."""
+
 PRESERVATION_SYNC_UI_ICON_PATH = None
 """Icon path under instance's static folder."""

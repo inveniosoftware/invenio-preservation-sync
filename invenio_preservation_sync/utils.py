@@ -34,6 +34,10 @@ def preservation_info_render(record):
         "PRESERVATION_SYNC_UI_TITLE", "Preservation Platform"
     )
     url = current_app.config.get("PRESERVATION_SYNC_UI_LINK", result["uri"])
+    if can_manage and not current_app.config.get(
+        "PRESERVATION_SYNC_UI_MANAGER_LINK_OVERRIDE", True
+    ):
+        url = result["uri"]
     status = PreservationStatus(result["status"]).name
     logo_path = current_app.config.get("PRESERVATION_SYNC_UI_ICON_PATH", None)
 
