@@ -17,8 +17,6 @@ from .proxies import current_preservation_sync_service as service
 
 def preservation_info_render(record):
     """Render the preservation info."""
-    ret = []
-
     permissions = record.has_permissions_to(["manage"])
     can_manage = permissions.get("can_manage", False)
 
@@ -28,7 +26,7 @@ def preservation_info_render(record):
     if not result or (
         result["status"] != PreservationStatus.PRESERVED and not can_manage
     ):
-        return
+        return []
 
     title = current_app.config.get(
         "PRESERVATION_SYNC_UI_TITLE", "Preservation Platform"
@@ -41,7 +39,7 @@ def preservation_info_render(record):
     status = PreservationStatus(result["status"]).name
     logo_path = current_app.config.get("PRESERVATION_SYNC_UI_ICON_PATH", None)
 
-    ret.append(
+    return [
         {
             "content": {
                 "url": url,
@@ -51,6 +49,4 @@ def preservation_info_render(record):
                 "section": ("Preserved in"),
             },
         }
-    )
-
-    return ret
+    ]
