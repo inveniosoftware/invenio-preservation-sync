@@ -24,13 +24,13 @@ PRESERVATION_SYNC_PERMISSION_POLICY = None
 """Override the default permission policy to read and write preservation information."""
 
 PRESERVATION_SYNC_UI_TITLE = "Preservation Platform"
-"""Override title for the External Resource."""
+"""Override title for the External Resource entry."""
 
-PRESERVATION_SYNC_UI_LINK = None
-"""Override the link shown on the UI."""
+PRESERVATION_SYNC_UI_INFO_LINK = None
+"""Link for additional information about the preservations."""
 
-PRESERVATION_SYNC_UI_MANAGER_LINK_OVERRIDE = True
-"""If True, PRESERVATION_SYNC_UI_LINK value is used, if False then uri field for can_manage permission."""
+PRESERVATION_SYNC_UI_URI_SUPERUSER_ONLY = True
+"""If True only superusers can see the URI provided for the preservation."""
 
 PRESERVATION_SYNC_UI_ICON_PATH = None
 """Icon path under instance's static folder."""
