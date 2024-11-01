@@ -33,10 +33,7 @@ def preservation_info_render(record):
         "PRESERVATION_SYNC_UI_TITLE", _("Preservation Platform")
     )
     url = None
-    if current_app.config.get("PRESERVATION_SYNC_UI_URI_SUPERUSER_ONLY", True):
-        if is_superuser:
-            url = result["uri"]
-    else:
+    if is_superuser:
         url = result["uri"]
     info_link = current_app.config.get("PRESERVATION_SYNC_UI_INFO_LINK", None)
     icon_path = current_app.config.get("PRESERVATION_SYNC_UI_ICON_PATH", None)

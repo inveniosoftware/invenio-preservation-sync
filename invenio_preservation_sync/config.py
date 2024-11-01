@@ -29,8 +29,5 @@ PRESERVATION_SYNC_UI_TITLE = "Preservation Platform"
 PRESERVATION_SYNC_UI_INFO_LINK = None
 """Link for additional information about the preservations."""
 
-PRESERVATION_SYNC_UI_URI_SUPERUSER_ONLY = True
-"""If True only superusers can see the URI provided for the preservation."""
-
 PRESERVATION_SYNC_UI_ICON_PATH = None
 """Icon path under instance's static folder."""
