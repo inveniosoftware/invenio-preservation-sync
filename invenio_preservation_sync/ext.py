@@ -8,10 +8,18 @@
 
 """Invenio module that adds Preservation Sync integration to the platform."""
 
+from flask.blueprints import Blueprint
+
 from . import config
 from .resources import PreservationInfoResource, PreservationInfoResourceConfig
 from .services import PreservationInfoService
 from .services.config import PreservationInfoServiceConfig
+
+blueprint = Blueprint(
+    "invenio_preservation_sync",
+    __name__,
+    template_folder="templates",
+)
 
 
 class InvenioPreservationSync(object):
@@ -30,6 +38,7 @@ class InvenioPreservationSync(object):
         app.extensions["invenio-preservation-sync"] = self
         if self.is_enabled(app):
             app.register_blueprint(self.preservation_info_resource.as_blueprint())
+            app.register_blueprint(blueprint)
 
     def init_service(self, app):
         """Initialize the service."""

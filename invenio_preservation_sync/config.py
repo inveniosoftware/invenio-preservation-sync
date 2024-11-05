@@ -22,3 +22,12 @@ PRESERVATION_SYNC_PID_RESOLVER = None
 
 PRESERVATION_SYNC_PERMISSION_POLICY = None
 """Override the default permission policy to read and write preservation information."""
+
+PRESERVATION_SYNC_UI_TITLE = "Preservation Platform"
+"""Override title for the External Resource entry."""
+
+PRESERVATION_SYNC_UI_INFO_LINK = None
+"""Link for additional information about the preservations."""
+
+PRESERVATION_SYNC_UI_ICON_PATH = None
+"""Icon path under instance's static folder."""
