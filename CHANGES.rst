@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 0.1.1 (released TBD)
+
+- ui: added utils function to render as an External resource
+
 Version 0.1.0 (released TBD)
 
 - Initial public release.
