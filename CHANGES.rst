@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version 0.3.0 (released 2026-02-13)
+
+- installation: bump dependency major versions
+- feat(models): change datetime columns to UTC
+
 Version 0.2.0 (released 2025-03-10)
 
 - installation: upgrade invenio dependencies
