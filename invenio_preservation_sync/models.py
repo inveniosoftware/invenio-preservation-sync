@@ -12,9 +12,9 @@ import uuid
 from enum import Enum
 
 from invenio_db import db
+from invenio_db.shared import Timestamp
 from invenio_webhooks.models import Event
 from sqlalchemy.dialects import postgresql
-from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import ChoiceType, JSONType, UUIDType
 
 from .errors import (
@@ -84,7 +84,7 @@ class PreservationInfoModel(db.Model, Timestamp):
     """Status of the preservation, e.g. 'preserved', 'processing', 'failed', etc."""
 
     harvest_timestamp = db.Column(
-        db.DateTime,
+        db.UTCDateTime(),
         unique=False,
         index=False,
         nullable=True,
@@ -92,7 +92,7 @@ class PreservationInfoModel(db.Model, Timestamp):
     """Timestamp when the record's data was harvested."""
 
     archive_timestamp = db.Column(
-        db.DateTime,
+        db.UTCDateTime(),
         unique=False,
         index=True,
         nullable=True,
