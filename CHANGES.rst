@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 0.4.0 (released 2026-06-08)
+
+- installation: bump dependency major versions
+
 Version 0.3.0 (released 2026-02-13)
 
 - installation: bump dependency major versions
